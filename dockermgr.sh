@@ -129,7 +129,24 @@ EOF
 }
 
 # ---------- docker compose ----------
+COMPOSE_BASE="/opt/docker-compose"
+
 compose_menu() {
+  header
+  echo "当前可用项目："
+  ls "$COMPOSE_BASE"
+  echo
+
+  read_tty "请输入项目名: "
+  PROJECT="$REPLY"
+  PROJECT_DIR="$COMPOSE_BASE/$PROJECT"
+
+  if [[ ! -d "$PROJECT_DIR" ]]; then
+    echo "❌ 项目不存在"
+    pause
+    return
+  fi
+
   header
   cat <<EOF
 1) 启动 compose
@@ -139,16 +156,18 @@ compose_menu() {
 5) 删除 compose（含卷）
 0) 返回
 EOF
+
   read_tty "选择: "
   case "$REPLY" in
-    1) docker compose up -d ;;
-    2) docker compose down ;;
-    3) docker compose restart ;;
-    4) docker compose ps ;;
-    5) docker compose down -v ;;
+    1) (cd "$PROJECT_DIR" && docker compose up -d) ;;
+    2) (cd "$PROJECT_DIR" && docker compose down) ;;
+    3) (cd "$PROJECT_DIR" && docker compose restart) ;;
+    4) (cd "$PROJECT_DIR" && docker compose ps) ;;
+    5) (cd "$PROJECT_DIR" && docker compose down -v) ;;
   esac
   pause
 }
+
 
 # ---------- 主菜单 ----------
 main_menu() {
