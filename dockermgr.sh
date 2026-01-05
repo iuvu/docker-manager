@@ -196,6 +196,7 @@ EOF
     5) (cd "$PROJECT_DIR" && docker compose restart) ;;
     6) (cd "$PROJECT_DIR" && docker compose ps) ;;
     7) (cd "$PROJECT_DIR" && docker compose down -v) ;;
+    0) break ;;*) echo "无效选择" ;;
       esac
       pause
     done
