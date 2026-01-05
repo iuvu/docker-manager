@@ -129,7 +129,7 @@ EOF
 }
 
 # ---------- docker compose ----------
-COMPOSE_BASE="/opt/docker-compose"
+COMPOSE_BASE="/"
 
 compose_menu() {
   header
