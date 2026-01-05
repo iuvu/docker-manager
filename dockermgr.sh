@@ -42,28 +42,33 @@ header() {
 
 # ---------- Docker 服务 ----------
 docker_service_menu() {
-  header
-  cat <<EOF
+  while true; do
+    header
+    cat <<EOF
 1) 启动 Docker
 2) 停止 Docker
 3) 重启 Docker
 4) 查看状态
 0) 返回
 EOF
-  read_tty "选择: "
-  case "$REPLY" in
-    1) systemctl start docker ;;
-    2) systemctl stop docker ;;
-    3) systemctl restart docker ;;
-    4) systemctl is-active docker && echo "运行中" || echo "未运行" ;;
-  esac
-  pause
+    read_tty "选择: "
+    case "$REPLY" in
+      1) systemctl start docker ;;
+      2) systemctl stop docker ;;
+      3) systemctl restart docker ;;
+      4) systemctl is-active docker && echo "运行中" || echo "未运行" ;;
+      0) return ;;
+      *) echo "无效选择" ;;
+    esac
+    pause
+  done
 }
 
 # ---------- 容器 ----------
 container_menu() {
-  header
-  cat <<EOF
+  while true; do
+    header
+    cat <<EOF
 1) 查看运行中容器
 2) 查看全部容器
 3) 启动容器
@@ -75,80 +80,100 @@ container_menu() {
 9) 清理停止容器
 0) 返回
 EOF
-  read_tty "选择: "
-  case "$REPLY" in
-    1) docker ps ;;
-    2) docker ps -a ;;
-    3) read_tty "容器名: "; docker start "$REPLY" ;;
-    4) read_tty "容器名: "; docker stop "$REPLY" ;;
-    5) read_tty "容器名: "; docker restart "$REPLY" ;;
-    6) read_tty "容器名: "; docker rm -f "$REPLY" ;;
-    7) read_tty "容器名: "; docker exec -it "$REPLY" bash ;;
-    8) read_tty "容器名: "; docker logs -f "$REPLY" ;;
-    9) docker container prune -f ;;
-  esac
-  pause
+    read_tty "选择: "
+    case "$REPLY" in
+      1) docker ps ;;
+      2) docker ps -a ;;
+      3) read_tty "容器名: "; docker start "$REPLY" ;;
+      4) read_tty "容器名: "; docker stop "$REPLY" ;;
+      5) read_tty "容器名: "; docker restart "$REPLY" ;;
+      6) read_tty "容器名: "; docker rm -f "$REPLY" ;;
+      7) read_tty "容器名: "; docker exec -it "$REPLY" bash ;;
+      8) read_tty "容器名: "; docker logs -f "$REPLY" ;;
+      9) docker container prune -f ;;
+      0) return ;;
+      *) echo "无效选择" ;;
+    esac
+    pause
+  done
 }
 
 # ---------- 镜像 ----------
 image_menu() {
-  header
-  cat <<EOF
+  while true; do
+    header
+    cat <<EOF
 1) 查看镜像
 2) 删除镜像
 3) 清理无用镜像
 0) 返回
 EOF
-  read_tty "选择: "
-  case "$REPLY" in
-    1) docker images ;;
-    2) read_tty "镜像ID: "; docker rmi -f "$REPLY" ;;
-    3) docker image prune -a -f ;;
-  esac
-  pause
+    read_tty "选择: "
+    case "$REPLY" in
+      1) docker images ;;
+      2) read_tty "镜像ID: "; docker rmi -f "$REPLY" ;;
+      3) docker image prune -a -f ;;
+      0) return ;;
+      *) echo "无效选择" ;;
+    esac
+    pause
+  done
 }
 
 # ---------- 网络 / 卷 ----------
 netvol_menu() {
-  header
-  cat <<EOF
+  while true; do
+    header
+    cat <<EOF
 1) 查看网络
 2) 删除网络
 3) 查看卷
 4) 删除卷
 0) 返回
 EOF
-  read_tty "选择: "
-  case "$REPLY" in
-    1) docker network ls ;;
-    2) read_tty "网络名: "; docker network rm "$REPLY" ;;
-    3) docker volume ls ;;
-    4) read_tty "卷名: "; docker volume rm "$REPLY" ;;
-  esac
-  pause
+    read_tty "选择: "
+    case "$REPLY" in
+      1) docker network ls ;;
+      2) read_tty "网络名: "; docker network rm "$REPLY" ;;
+      3) docker volume ls ;;
+      4) read_tty "卷名: "; docker volume rm "$REPLY" ;;
+      0) return ;;
+      *) echo "无效选择" ;;
+    esac
+    pause
+  done
 }
 
 # ---------- docker compose ----------
 COMPOSE_BASE="/root"
 
 compose_menu() {
-  header
-  echo "当前可用项目："
-  ls "$COMPOSE_BASE"
-  echo
+  mkdir -p "$COMPOSE_BASE"
 
-  read_tty "请输入项目名: "
-  PROJECT="$REPLY"
-  PROJECT_DIR="$COMPOSE_BASE/$PROJECT"
+  while true; do
+    header
+    echo "Compose 项目目录：$COMPOSE_BASE"
+    echo "当前可用项目："
+    find "$COMPOSE_BASE" -mindepth 1 -maxdepth 1 -type d -printf "%f\n" 2>/dev/null | sort
+    echo
+    echo "输入 0 返回"
+    echo
 
-  if [[ ! -d "$PROJECT_DIR" ]]; then
-    echo "❌ 项目不存在：$PROJECT_DIR"
-    pause
-    return
-  fi
+    read_tty "请输入项目名: "
+    PROJECT="$REPLY"
+    [[ "$PROJECT" == "0" ]] && return
 
-  header
-  cat <<EOF
+    PROJECT_DIR="$COMPOSE_BASE/$PROJECT"
+    if [[ ! -d "$PROJECT_DIR" ]]; then
+      echo "❌ 项目不存在：$PROJECT_DIR"
+      pause
+      continue
+    fi
+
+    # 项目内菜单循环：操作完回到项目菜单，不回主菜单
+    while true; do
+      header
+      cat <<EOF
 当前项目：$PROJECT
 项目路径：$PROJECT_DIR
 
@@ -171,8 +196,10 @@ EOF
     5) (cd "$PROJECT_DIR" && docker compose restart) ;;
     6) (cd "$PROJECT_DIR" && docker compose ps) ;;
     7) (cd "$PROJECT_DIR" && docker compose down -v) ;;
-  esac
-  pause
+      esac
+      pause
+    done
+  done
 }
 
 # ---------- 主菜单 ----------
@@ -195,6 +222,7 @@ EOF
       4) netvol_menu ;;
       5) compose_menu ;;
       0) exit 0 ;;
+      *) echo "无效选择"; pause ;;
     esac
   done
 }
