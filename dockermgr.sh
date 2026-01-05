@@ -10,19 +10,26 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
-# ---------- Docker 安装检测 ----------
+# ---------- Docker 检测 ----------
 if ! command -v docker >/dev/null 2>&1; then
   echo "❌ 未检测到 Docker，请先安装 Docker"
   exit 1
 fi
 
 # ---------- 颜色 ----------
+BLUE="\033[36m"
 GREEN="\033[32m"
 RED="\033[31m"
-BLUE="\033[36m"
 RESET="\033[0m"
 
-pause() { read -rp "按回车继续..."; }
+# ---------- 统一输入（解决 curl | bash 交互问题） ----------
+read_tty() {
+  read -rp "$1" REPLY </dev/tty
+}
+
+pause() {
+  read -rp "按回车继续..." </dev/tty
+}
 
 header() {
   clear
@@ -43,8 +50,8 @@ docker_service_menu() {
 4) 查看状态
 0) 返回
 EOF
-  read -rp "选择: " c
-  case "$c" in
+  read_tty "选择: "
+  case "$REPLY" in
     1) systemctl start docker ;;
     2) systemctl stop docker ;;
     3) systemctl restart docker ;;
@@ -68,16 +75,16 @@ container_menu() {
 9) 清理停止容器
 0) 返回
 EOF
-  read -rp "选择: " c
-  case "$c" in
+  read_tty "选择: "
+  case "$REPLY" in
     1) docker ps ;;
     2) docker ps -a ;;
-    3) read -rp "容器名: " name; docker start "$name" ;;
-    4) read -rp "容器名: " name; docker stop "$name" ;;
-    5) read -rp "容器名: " name; docker restart "$name" ;;
-    6) read -rp "容器名: " name; docker rm -f "$name" ;;
-    7) read -rp "容器名: " name; docker exec -it "$name" bash ;;
-    8) read -rp "容器名: " name; docker logs -f "$name" ;;
+    3) read_tty "容器名: "; docker start "$REPLY" ;;
+    4) read_tty "容器名: "; docker stop "$REPLY" ;;
+    5) read_tty "容器名: "; docker restart "$REPLY" ;;
+    6) read_tty "容器名: "; docker rm -f "$REPLY" ;;
+    7) read_tty "容器名: "; docker exec -it "$REPLY" bash ;;
+    8) read_tty "容器名: "; docker logs -f "$REPLY" ;;
     9) docker container prune -f ;;
   esac
   pause
@@ -92,10 +99,10 @@ image_menu() {
 3) 清理无用镜像
 0) 返回
 EOF
-  read -rp "选择: " c
-  case "$c" in
+  read_tty "选择: "
+  case "$REPLY" in
     1) docker images ;;
-    2) read -rp "镜像ID: " id; docker rmi -f "$id" ;;
+    2) read_tty "镜像ID: "; docker rmi -f "$REPLY" ;;
     3) docker image prune -a -f ;;
   esac
   pause
@@ -111,12 +118,12 @@ netvol_menu() {
 4) 删除卷
 0) 返回
 EOF
-  read -rp "选择: " c
-  case "$c" in
+  read_tty "选择: "
+  case "$REPLY" in
     1) docker network ls ;;
-    2) read -rp "网络名: " net; docker network rm "$net" ;;
+    2) read_tty "网络名: "; docker network rm "$REPLY" ;;
     3) docker volume ls ;;
-    4) read -rp "卷名: " vol; docker volume rm "$vol" ;;
+    4) read_tty "卷名: "; docker volume rm "$REPLY" ;;
   esac
   pause
 }
@@ -132,8 +139,8 @@ compose_menu() {
 5) 删除 compose（含卷）
 0) 返回
 EOF
-  read -rp "选择: " c
-  case "$c" in
+  read_tty "选择: "
+  case "$REPLY" in
     1) docker compose up -d ;;
     2) docker compose down ;;
     3) docker compose restart ;;
@@ -155,8 +162,8 @@ main_menu() {
 5) docker-compose 管理
 0) 退出
 EOF
-    read -rp "选择: " choice
-    case "$choice" in
+    read_tty "选择: "
+    case "$REPLY" in
       1) docker_service_menu ;;
       2) container_menu ;;
       3) image_menu ;;
