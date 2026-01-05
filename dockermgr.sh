@@ -129,7 +129,7 @@ EOF
 }
 
 # ---------- docker compose ----------
-COMPOSE_BASE="/"
+COMPOSE_BASE="/root"
 
 compose_menu() {
   header
@@ -142,32 +142,38 @@ compose_menu() {
   PROJECT_DIR="$COMPOSE_BASE/$PROJECT"
 
   if [[ ! -d "$PROJECT_DIR" ]]; then
-    echo "❌ 项目不存在"
+    echo "❌ 项目不存在：$PROJECT_DIR"
     pause
     return
   fi
 
   header
   cat <<EOF
-1) 启动 compose
-2) 停止 compose
-3) 重启 compose
-4) 查看状态
-5) 删除 compose（含卷）
+当前项目：$PROJECT
+项目路径：$PROJECT_DIR
+
+1) 启动 compose(前台)
+2) 启动至后台 compose(-d)
+3) 拉取当前项目全部镜像 (docker compose pull)
+4) 停止 compose
+5) 重启 compose
+6) 查看状态
+7) 删除 compose（含卷）
 0) 返回
 EOF
 
   read_tty "选择: "
   case "$REPLY" in
-    1) (cd "$PROJECT_DIR" && docker compose up -d) ;;
-    2) (cd "$PROJECT_DIR" && docker compose down) ;;
-    3) (cd "$PROJECT_DIR" && docker compose restart) ;;
-    4) (cd "$PROJECT_DIR" && docker compose ps) ;;
-    5) (cd "$PROJECT_DIR" && docker compose down -v) ;;
+    1) (cd "$PROJECT_DIR" && docker compose up) ;;
+    2) (cd "$PROJECT_DIR" && docker compose up -d) ;;
+    3) (cd "$PROJECT_DIR" && docker compose pull) ;;
+    4) (cd "$PROJECT_DIR" && docker compose down) ;;
+    5) (cd "$PROJECT_DIR" && docker compose restart) ;;
+    6) (cd "$PROJECT_DIR" && docker compose ps) ;;
+    7) (cd "$PROJECT_DIR" && docker compose down -v) ;;
   esac
   pause
 }
-
 
 # ---------- 主菜单 ----------
 main_menu() {
